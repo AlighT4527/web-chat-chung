@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Web Chat Chung — Văn phòng công ty</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <header id="topbar">
+    <div class="brand">🏢 <b>Web Chat Chung</b> <span class="brand-sub">· Văn phòng công ty</span></div>
+    <div class="top-actions">
+      <span id="online-count" class="pill">🟢 0 người online</span>
+      <label class="autopilot" title="Sau 60 giây không thao tác, Tifa sẽ tự điều khiển nhân vật của bạn">
+        <input type="checkbox" id="autopilot-toggle" checked>
+        <span>🤖 Tifa tự điều khiển khi bạn vắng</span>
+      </label>
+      <button id="guide-btn" class="btn small">📖 Hướng dẫn</button>
+    </div>
+  </header>
+
+  <main id="layout">
+    <section id="scene-wrap">
+      <div id="scene" title="Bấm vào một khu để nhân vật bước tới đó">
+        <img id="scene-bg" src="assets/office.png" alt="Văn phòng công ty">
+        <div id="characters"></div>
+        <div id="zone-hint">👆 Bấm vào khu làm việc, khu ăn uống hoặc phòng họp để di chuyển</div>
+      </div>
+      <div id="action-bar">
+        <span class="action-label">Nhân vật của bạn:</span>
+        <button class="action-btn" data-action="work">💻 Làm việc</button>
+        <button class="action-btn" data-action="coffee">☕ Pha cafe</button>
+        <button class="action-btn" data-action="talk">💬 Trò chuyện</button>
+        <button class="action-btn" data-action="rest">🛋️ Nghỉ ngơi</button>
+        <span id="my-status" class="my-status"></span>
+      </div>
+      <div id="tifa-tip">💡 <b>Mẹo của Tifa:</b> <span id="tifa-tip-text"></span></div>
+    </section>
+
+    <aside id="sidebar">
+      <section id="people-panel">
+        <h2>👥 Mọi người trong văn phòng</h2>
+        <ul id="people-list"></ul>
+      </section>
+      <section id="chat-panel">
+        <h2>💬 Kênh công ty <span class="channel-note">· chung cho tất cả mọi người</span></h2>
+        <div id="messages"></div>
+        <form id="chat-form">
+          <input id="chat-input" type="text" placeholder="Nhắn tin cho cả công ty..." maxlength="500" autocomplete="off">
+          <button type="submit" class="btn">Gửi</button>
+        </form>
+      </section>
+    </aside>
+  </main>
+</div>
+
+<!-- Màn hình vào văn phòng -->
+<div id="entry-overlay">
+  <div class="entry-card">
+    <h1>🏢 Web Chat Chung</h1>
+    <p class="entry-tagline">Văn phòng chung 2,5D — trò chuyện và hỗ trợ nhau làm việc</p>
+    <label class="field-label" for="name-input">Tên hiển thị của bạn</label>
+    <input id="name-input" type="text" placeholder="Ví dụ: Quang Anh" maxlength="24" autocomplete="off">
+    <p class="field-label">Chọn tạo hình nhân vật</p>
+    <div id="avatar-grid"></div>
+    <div class="quick-guide">
+      <b>📖 Hướng dẫn nhanh:</b>
+      <ul>
+        <li>Bấm vào một khu trong văn phòng để nhân vật bước tới đó.</li>
+        <li>Dùng các nút <b>Làm việc / Pha cafe / Trò chuyện / Nghỉ ngơi</b> để điều khiển nhân vật.</li>
+        <li>Bật <b>🤖 Tifa tự điều khiển khi bạn vắng</b>: sau 60 giây không thao tác, nhân vật sẽ tự sinh hoạt.</li>
+        <li>Kênh chat công ty là kênh chung — mọi người đều thấy tin nhắn của nhau.</li>
+      </ul>
+    </div>
+    <button id="enter-btn" class="btn big">Vào văn phòng →</button>
+    <p id="entry-error" class="error"></p>
+  </div>
+</div>
+
+<!-- Panel hướng dẫn -->
+<div id="guide-overlay" class="hidden">
+  <div class="guide-card">
+    <button id="guide-close" class="btn small">✕ Đóng</button>
+    <h2>📖 Hướng dẫn sử dụng văn phòng chung</h2>
+    <h3>Di chuyển &amp; hành động</h3>
+    <ul>
+      <li><b>Bấm vào cảnh văn phòng</b>: nhân vật của bạn sẽ bước tới vị trí đó với dáng đi nhìn ngang.</li>
+      <li><b>💻 Làm việc</b>: nhân vật ngồi lên ghế ở bàn PC, quay lưng lại, màn hình PC sáng lên.</li>
+      <li><b>☕ Pha cafe</b>: nhân vật bước tới khu ăn uống, đứng ở máy pha/cây nước và cầm cốc cafe bốc hơi.</li>
+      <li><b>💬 Trò chuyện</b>: nhân vật đứng trò chuyện cùng mọi người ở bàn ăn hoặc bàn họp.</li>
+      <li><b>🛋️ Nghỉ ngơi</b>: nhân vật ra góc sofa ở phòng họp để thư giãn.</li>
+    </ul>
+    <h3>Chế độ tự động &amp; điều khiển tay</h3>
+    <ul>
+      <li>Mỗi người đều có cả hai chế độ cho nhân vật của mình: <b>điều khiển tay</b> bằng các nút hành động, và <b>tự động</b> khi vắng mặt.</li>
+      <li>Bật công tắc <b>🤖 Tifa tự điều khiển khi bạn vắng</b>: sau 60 giây bạn không thao tác, nhân vật sẽ tự đi lại sinh hoạt (làm việc → pha cafe → nghỉ sofa → ghé phòng họp).</li>
+      <li>Chỉ cần bấm, gõ phím hoặc nhắn tin là bạn lấy lại quyền điều khiển ngay lập tức.</li>
+      <li>Danh sách mọi người hiển thị rõ ai đang ở chế độ <b>🤖 Tự động</b> hay <b>✋ Thủ công</b>.</li>
+    </ul>
+    <h3>Chat</h3>
+    <ul>
+      <li>Chỉ có <b>một kênh chat công ty chung</b> cho tất cả mọi người, không chia kênh theo phòng.</li>
+      <li>Tin nhắn mới nhất của mỗi người hiện thành bong bóng thoại ngay trên đầu nhân vật của họ.</li>
+    </ul>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
