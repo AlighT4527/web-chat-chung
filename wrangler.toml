@@ -15,6 +15,7 @@ name = "CHAT_ROOM"
 class_name = "ChatRoom"
 
 # Lần deploy đầu tiên sẽ tạo class Durable Object ChatRoom.
+# Gói Free của Cloudflare bắt buộc dùng new_sqlite_classes (lỗi 10097 nếu dùng new_classes).
 [[migrations]]
 tag = "v1"
-new_classes = ["ChatRoom"]
+new_sqlite_classes = ["ChatRoom"]
