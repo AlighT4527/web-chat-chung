@@ -1,0 +1,20 @@
+name = "web-chat-chung"
+main = "src/index.js"
+compatibility_date = "2026-11-18"
+
+# File tĩnh của giao diện (index.html, style.css, app.js, assets/).
+# Build command trên Cloudflare Workers Builds: "node decode-assets.js"
+# để giải mã các ảnh PNG vào public/assets/ trước khi deploy.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = true
+
+[[durable_objects.bindings]]
+name = "CHAT_ROOM"
+class_name = "ChatRoom"
+
+# Lần deploy đầu tiên sẽ tạo class Durable Object ChatRoom.
+[[migrations]]
+tag = "v1"
+new_classes = ["ChatRoom"]

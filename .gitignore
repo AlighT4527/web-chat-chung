@@ -1,2 +1,6 @@
 node_modules/
-data.json
+.wrangler/
+public/assets/*.png
+dev.sqlite
+dev.sqlite-shm
+dev.sqlite-wal
