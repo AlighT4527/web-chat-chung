@@ -93,6 +93,16 @@ Thành công trả về mã `201` cùng tin nhắn đã tạo:
 Tin nhắn được lưu vào lịch sử và phát ngay tới mọi trình duyệt đang mở
 văn phòng qua WebSocket, giống như nhắn từ khung chat.
 
+## Drive chung (Google Drive)
+
+Kho file dùng chung của văn phòng là một thư mục trên Google Drive, mở
+bằng nút **📂 Mở Drive chung** trong panel 💾 Drive chung của giao diện
+web. Mọi người tải tệp lên, xem và tải tệp về ngay trong giao diện
+Google Drive (cần đăng nhập tài khoản Google để tải lên). Sau khi tải
+lên hoặc xóa tệp, dùng ô thông báo trong panel để gửi một tin nhắn vào
+kênh chat cho mọi người cùng biết. API REST của web chat không quản lý
+tệp trong thư mục này.
+
 ## Bảo vệ bằng khóa API (tùy chọn)
 
 Nếu máy chủ được cấu hình biến `API_KEY` (bản Node: biến môi trường;

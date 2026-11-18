@@ -64,6 +64,7 @@ const TIFA_TIPS = [
   'Khi bạn nhắn tin, tin nhắn sẽ hiện thành bong bóng thoại ngay trên đầu nhân vật của bạn.',
   'Pha cafe xong, thử bấm Trò chuyện để nhân vật ra bàn ăn tám với mọi người nhé.',
   'Dùng hàng nút Biểu cảm để đổi nét mặt của nhân vật — mọi người trong văn phòng đều thấy.',
+  'Mở panel 💾 Drive chung để lên Google Drive tải file cho cả công ty dùng, rồi bấm nút thông báo để mọi người cùng biết nhé.',
 ];
 
 const $ = (sel) => document.querySelector(sel);
@@ -390,6 +391,21 @@ function showBubble(m) {
     if (latest && !rec.el.classList.contains('walking')) applyPose(rec, latest);
   }, 4100);
 }
+
+// ---------- Drive chung (Google Drive) ----------
+// Thư mục dùng chung nằm trên Google Drive; panel chỉ mở link thư mục và
+// gửi tin nhắn thông báo vào kênh chat sau khi ai đó tải lên/xóa tệp.
+function sendDriveNotice() {
+  const input = $('#drive-notify-input');
+  const text = input.value.trim();
+  if (!text || !connected) return;
+  ws.send(JSON.stringify({ type: 'chat', text: '📁 ' + text }));
+  input.value = '';
+  markInteraction();
+}
+
+$('#drive-notify-btn').addEventListener('click', sendDriveNotice);
+$('#drive-notify-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') sendDriveNotice(); });
 
 $('#chat-form').addEventListener('submit', (e) => {
   e.preventDefault();

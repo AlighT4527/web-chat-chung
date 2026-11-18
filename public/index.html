@@ -47,6 +47,16 @@
         <h2>👥 Mọi người trong văn phòng</h2>
         <ul id="people-list"></ul>
       </section>
+      <section id="drive-panel">
+        <h2>💾 Drive chung <span class="channel-note">· trên Google Drive</span></h2>
+        <p class="drive-desc">Kho file dùng chung của cả công ty. Bấm nút dưới để mở thư mục, tải tệp lên hoặc tải về.</p>
+        <a id="drive-open-btn" class="btn small" href="https://drive.google.com/drive/folders/1pjj5FLI69IXypJDfsUrNmIUkbHnaOtnT" target="_blank" rel="noopener">📂 Mở Drive chung</a>
+        <div class="drive-notify">
+          <input id="drive-notify-input" type="text" placeholder="Thông báo về Drive chung, ví dụ: đã tải lên bao-cao.pdf" maxlength="200" autocomplete="off">
+          <button id="drive-notify-btn" class="btn small">🔔 Thông báo cho mọi người</button>
+        </div>
+        <span class="drive-note">Cần đăng nhập tài khoản Google để tải tệp lên.</span>
+      </section>
       <section id="chat-panel">
         <h2>💬 Kênh công ty <span class="channel-note">· chung cho tất cả mọi người</span></h2>
         <div id="messages"></div>
@@ -75,6 +85,7 @@
         <li>Dùng các nút <b>Làm việc / Pha cafe / Trò chuyện / Nghỉ ngơi</b> để điều khiển nhân vật.</li>
         <li>Bật <b>🤖 Tifa tự điều khiển khi bạn vắng</b>: sau 60 giây không thao tác, nhân vật sẽ tự sinh hoạt.</li>
         <li>Kênh chat công ty là kênh chung — mọi người đều thấy tin nhắn của nhau.</li>
+        <li><b>💾 Drive chung</b> là kho file của cả công ty trên Google Drive: bấm nút mở thư mục để tải lên/tải về, rồi dùng ô thông báo để báo cho mọi người biết.</li>
       </ul>
     </div>
     <button id="enter-btn" class="btn big">Vào văn phòng →</button>
@@ -107,6 +118,13 @@
     <ul>
       <li>Chỉ có <b>một kênh chat công ty chung</b> cho tất cả mọi người, không chia kênh theo phòng.</li>
       <li>Tin nhắn mới nhất của mỗi người hiện thành bong bóng thoại ngay trên đầu nhân vật của họ.</li>
+      <li>Khi có người tải tệp lên hoặc xóa tệp khỏi <b>💾 Drive chung</b>, kênh chat sẽ có thông báo để mọi người cùng biết.</li>
+    </ul>
+    <h3>Drive chung</h3>
+    <ul>
+      <li><b>💾 Drive chung</b> là thư mục dùng chung của cả công ty trên Google Drive.</li>
+      <li>Bấm <b>📂 Mở Drive chung</b> để mở thư mục trong tab mới: tải tệp lên, xem và tải tệp về ngay trong giao diện Google Drive. Cần đăng nhập tài khoản Google để tải tệp lên.</li>
+      <li>Sau khi tải lên hoặc xóa tệp, gõ nội dung vào ô thông báo rồi bấm <b>🔔 Thông báo cho mọi người</b> — tin nhắn sẽ hiện trong kênh chat để cả văn phòng cùng biết.</li>
     </ul>
   </div>
 </div>
