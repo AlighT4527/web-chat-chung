@@ -105,77 +105,24 @@ button { cursor: pointer; }
 }
 .nametag .mode-dot { font-size: 9px; margin-left: 3px; }
 
+/* Sprite co theo chiều cao, giữ đúng tỉ lệ từng dáng/biểu cảm. */
 .sprite {
   position: relative;
-  width: var(--w);
   height: var(--char-h);
 }
-.sprite-img {
-  width: 100%; height: 100%;
-  object-fit: contain; display: block;
+.sprite-img, .walk-img {
+  height: 100%; width: auto;
+  display: block;
   transition: transform .3s ease;
 }
+.walk-img { display: none; }
+.char.walking .walk-img { display: block; }
+.char.walking .sprite-img { display: none; }
 .char.flip .sprite { transform: scaleX(-1); }
 
-/* Dáng đi: cắt sprite thành thân trên + 2 chân bước xen kẽ */
-.slices { display: none; position: absolute; inset: 0; }
-.char.walking .slices { display: block; }
-.char.walking .sprite-img { display: none; }
-.slices .upper, .slices .leg {
-  position: absolute;
-  background-repeat: no-repeat;
-  background-size: var(--w) var(--char-h);
-}
-.slices .upper {
-  left: 0; top: 0; width: 100%; height: 72%;
-  background-position: 0 0;
-  animation: bob .3s ease-in-out infinite alternate;
-}
-.slices .leg { top: 72%; height: 28%; width: 50%; }
-.slices .leg-l {
-  left: 0;
-  background-position: 0 calc(var(--char-h) * -0.72);
-  animation: stepL .3s ease-in-out infinite alternate;
-  transform-origin: top center;
-}
-.slices .leg-r {
-  left: 50%;
-  background-position: calc(var(--w) * -0.5) calc(var(--char-h) * -0.72);
-  animation: stepR .3s ease-in-out infinite alternate;
-  transform-origin: top center;
-}
-@keyframes bob { from { transform: translateY(0); } to { transform: translateY(-1.5px); } }
-@keyframes stepL { from { transform: translateY(0) rotate(0deg); } to { transform: translateY(-3px) rotate(-9deg); } }
-@keyframes stepR { from { transform: translateY(-3px) rotate(9deg); } to { transform: translateY(0) rotate(0deg); } }
-
-/* Ngồi làm việc: quay lưng, tóc phủ sau đầu, lưng ghế, màn hình sáng */
-.char.sitting .sprite-img { transform: translateY(24%) scale(.94); }
-.hair-back, .hair-long, .chair-back, .glow, .cup { display: none; }
-.char.sitting .hair-back {
-  display: block;
-  position: absolute; left: 50%; top: -3%;
-  width: 54%; height: 36%;
-  transform: translateX(-50%);
-  background: var(--hair);
-  border-radius: 50% 50% 42% 42% / 64% 64% 36% 36%;
-}
-.char.sitting.long-hair .hair-long {
-  display: block;
-  position: absolute; left: 50%; top: 22%;
-  width: 30%; height: 52%;
-  transform: translateX(-50%);
-  background: var(--hair);
-  border-radius: 0 0 10px 10px;
-}
-.char.sitting .chair-back {
-  display: block;
-  position: absolute; left: 50%; bottom: -5%;
-  width: 82%; height: 40%;
-  transform: translateX(-50%);
-  background: linear-gradient(#33506b, #1c3145);
-  border: 2px solid #0f1e2b;
-  border-radius: 8px 8px 4px 4px;
-}
+/* Ngồi làm việc: sprite đã là dáng ngồi quay lưng (kèm ghế/bàn vẽ sẵn);
+   chỉ thêm quầng sáng màn hình phía trên */
+.glow { display: none; }
 .char.sitting .glow {
   display: block;
   position: absolute; left: 50%; top: -20px;
@@ -187,12 +134,7 @@ button { cursor: pointer; }
 }
 @keyframes glowPulse { 0%, 100% { opacity: .75; } 50% { opacity: 1; } }
 
-/* Pha cafe: cầm cốc + hơi bốc lên */
-.char.coffee .cup {
-  display: block;
-  position: absolute; right: -12px; bottom: 6px;
-  font-size: 14px;
-}
+/* Pha cafe: sprite đã cầm bình/cốc; thêm hơi bốc lên */
 .char.coffee .sprite::after {
   content: "♨";
   position: absolute; right: -12px; top: 34%;
@@ -205,10 +147,9 @@ button { cursor: pointer; }
   100% { transform: translateY(-5px); opacity: .2; }
 }
 
-/* Trò chuyện / nghỉ ngơi */
+/* Trò chuyện: nhún nhẹ cho sinh động */
 .char.talking .sprite-img { animation: talkBounce 1s ease-in-out infinite; }
 @keyframes talkBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
-.char.relaxing .sprite-img { transform: rotate(-4deg) translateY(2px); }
 
 .badge {
   position: absolute; top: -4px; right: -12px;
@@ -239,21 +180,21 @@ button { cursor: pointer; }
 }
 .char.has-bubble .bubble { display: block; }
 
-/* ---------- Thanh hành động & mẹo ---------- */
-#action-bar {
+/* ---------- Thanh hành động, biểu cảm & mẹo ---------- */
+#action-bar, #expression-bar {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
   margin-top: 10px;
   background: var(--panel); border: 1px solid var(--line);
   border-radius: 10px; padding: 8px 10px;
 }
 .action-label { font-size: 13px; color: var(--muted); }
-.action-btn {
+.action-btn, .expr-btn {
   background: #1a3a4c; color: var(--text);
   border: 1px solid var(--line); border-radius: 8px;
   padding: 7px 12px; font-size: 13px;
 }
-.action-btn:hover { border-color: var(--gold); }
-.action-btn.active { background: var(--gold); color: #1a1405; border-color: var(--gold); }
+.action-btn:hover, .expr-btn:hover { border-color: var(--gold); }
+.action-btn.active, .expr-btn.active { background: var(--gold); color: #1a1405; border-color: var(--gold); }
 .my-status { margin-left: auto; font-size: 13px; color: var(--gold); }
 
 #tifa-tip {

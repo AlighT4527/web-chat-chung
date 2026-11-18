@@ -1,14 +1,27 @@
 // Web Chat Chung — logic phía trình duyệt: cảnh văn phòng, nhân vật, chat realtime.
+// Nhân vật có biểu cảm + dáng theo hành động (sprite riêng từng trạng thái) và
+// khung hình bước đi 6 frame khi di chuyển. Xem thêm trong README.
 
 const CHARACTERS = {
-  tifa:      { label: 'Tifa',      hair: '#2e2019', aspect: 293 / 640, longHair: true  },
-  aerith:    { label: 'Aerith',    hair: '#9c6b30', aspect: 302 / 640, longHair: true  },
-  yuna:      { label: 'Yuna',      hair: '#5d3a1e', aspect: 353 / 640, longHair: false },
-  cloud:     { label: 'Cloud',     hair: '#e8c93c', aspect: 320 / 640, longHair: false },
-  squall:    { label: 'Squall',    hair: '#96714a', aspect: 271 / 640, longHair: false },
-  lightning: { label: 'Lightning', hair: '#f2a7bb', aspect: 305 / 640, longHair: true  },
-  noctis:    { label: 'Noctis',    hair: '#191920', aspect: 270 / 640, longHair: false },
-  sakura:    { label: 'Sakura',    hair: '#f4a8c8', aspect: 450 / 640, longHair: true  },
+  tifa:      { label: 'Tifa' },
+  aerith:    { label: 'Aerith' },
+  yuna:      { label: 'Yuna' },
+  cloud:     { label: 'Cloud' },
+  squall:    { label: 'Squall' },
+  lightning: { label: 'Lightning' },
+  noctis:    { label: 'Noctis' },
+  sakura:    { label: 'Sakura' },
+};
+
+// Biểu cảm: tên -> nhãn nút chọn. Sprite tương ứng: assets/<avatar>-<tên>.png,
+// riêng 'neutral' dùng sprite đứng mặc định <avatar>-idle.png.
+const EXPRESSIONS = {
+  neutral:   { label: 'Bình thường', icon: '😐' },
+  happy:     { label: 'Vui',         icon: '😄' },
+  sad:       { label: 'Buồn',        icon: '😢' },
+  angry:     { label: 'Giận',        icon: '😠' },
+  surprised: { label: 'Ngạc nhiên',  icon: '😲' },
+  shy:       { label: 'Ngại',        icon: '😳' },
 };
 
 const ZONES = {
@@ -37,6 +50,7 @@ const TIFA_TIPS = [
   'Kênh chat công ty là kênh chung: một tin nhắn, cả văn phòng đều đọc được.',
   'Khi bạn nhắn tin, tin nhắn sẽ hiện thành bong bóng thoại ngay trên đầu nhân vật của bạn.',
   'Pha cafe xong, thử bấm Trò chuyện để nhân vật ra bàn ăn tám với mọi người nhé.',
+  'Dùng hàng nút Biểu cảm để đổi nét mặt của nhân vật — mọi người trong văn phòng đều thấy.',
 ];
 
 const $ = (sel) => document.querySelector(sel);
@@ -49,6 +63,7 @@ let ws = null;
 let myId = null;
 let myName = '';
 let myAvatar = 'tifa';
+let myExpression = 'neutral';
 let participants = [];
 let selectedAvatar = localStorage.getItem('wcc-avatar') || 'tifa';
 let connected = false;
@@ -71,6 +86,37 @@ function buildAvatarGrid() {
   }
 }
 
+function buildExpressionPicker() {
+  const bar = $('#expression-bar');
+  if (!bar) return;
+  for (const [key, e] of Object.entries(EXPRESSIONS)) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'expr-btn' + (key === myExpression ? ' active' : '');
+    btn.dataset.expression = key;
+    btn.textContent = `${e.icon} ${e.label}`;
+    btn.title = `Đổi biểu cảm: ${e.label}`;
+    btn.addEventListener('click', () => {
+      markInteraction();
+      setExpression(key);
+    });
+    bar.appendChild(btn);
+  }
+}
+
+function syncExpressionPicker() {
+  document.querySelectorAll('.expr-btn').forEach((b) => {
+    b.classList.toggle('active', b.dataset.expression === myExpression);
+  });
+}
+
+function setExpression(expr) {
+  if (!EXPRESSIONS[expr]) return;
+  myExpression = expr;
+  syncExpressionPicker();
+  if (connected) ws.send(JSON.stringify({ type: 'action', expression: expr }));
+}
+
 function connect() {
   const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
   ws = new WebSocket(`${proto}//${location.host}/ws`);
@@ -88,6 +134,10 @@ function connect() {
       myName = msg.name;
       myAvatar = msg.avatar;
       myMode = 'manual';
+      if (EXPRESSIONS[msg.expression]) {
+        myExpression = msg.expression;
+        syncExpressionPicker();
+      }
       messagesEl.innerHTML = '';
       msg.messages.forEach((m) => appendMessage(m));
       applyState(msg.participants);
@@ -113,7 +163,19 @@ function connect() {
 setInterval(() => { if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'ping' })); }, 20000);
 
 // ---------- Nhân vật trên cảnh ----------
-const charEls = new Map(); // id -> {el, x, y, action, walkTimer, bubbleTimer}
+const charEls = new Map(); // id -> {el, x, y, action, walkTimer, walkInterval, bubbleTimer, talkTimer, talkingUntil}
+
+// Chọn sprite theo hành động: dáng hành động thắng biểu cảm; biểu cảm chỉ
+// hiện khi đứng/ngồi trò chuyện. `talking` = vừa nhắn tin (hiện dáng nói ~4s).
+function spriteVariant(p, talking) {
+  if (p.action === 'sit') return 'workpc';
+  if (p.action === 'coffee') return 'cmake';
+  if (p.action === 'relax') return 'rest';
+  if (p.action === 'talk') return p.zone === 'pantry' ? 'drink' : 'talk';
+  if (talking) return 'talk';
+  const expr = EXPRESSIONS[p.expression] ? p.expression : 'neutral';
+  return expr === 'neutral' ? 'idle' : expr;
+}
 
 function escapeHtml(s) {
   return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -122,39 +184,49 @@ function escapeHtml(s) {
 function createCharEl(p) {
   const c = CHARACTERS[p.avatar] || CHARACTERS.tifa;
   const el = document.createElement('div');
-  el.className = 'char' + (p.id === myId ? ' me' : '') + (c.longHair ? ' long-hair' : '');
+  el.className = 'char' + (p.id === myId ? ' me' : '');
   el.style.left = p.x + '%';
   el.style.top = p.y + '%';
   el.innerHTML = `
     <div class="bubble"></div>
     <div class="nametag">${escapeHtml(p.name)}<span class="mode-dot"></span></div>
-    <div class="sprite" style="--w: calc(var(--char-h) * ${c.aspect}); --hair: ${c.hair}">
-      <img class="sprite-img" src="assets/${p.avatar}.png" alt="${c.label}">
-      <div class="slices">
-        <div class="upper" style="background-image:url('assets/${p.avatar}.png')"></div>
-        <div class="leg leg-l" style="background-image:url('assets/${p.avatar}.png')"></div>
-        <div class="leg leg-r" style="background-image:url('assets/${p.avatar}.png')"></div>
-      </div>
-      <div class="hair-back"></div>
-      <div class="hair-long"></div>
-      <div class="chair-back"></div>
+    <div class="sprite">
+      <img class="sprite-img" src="assets/${p.avatar}-idle.png" alt="${c.label}">
+      <img class="walk-img" src="assets/${p.avatar}-walk1.png" alt="">
       <div class="glow"></div>
-      <div class="cup">☕</div>
       <div class="badge"></div>
     </div>`;
   charsEl.appendChild(el);
-  return { el, x: p.x, y: p.y, action: p.action, walkTimer: null, bubbleTimer: null };
+  return { el, x: p.x, y: p.y, action: p.action, walkTimer: null, walkInterval: null, bubbleTimer: null, talkTimer: null, talkingUntil: 0 };
 }
 
-function poseClass(action) {
-  return { sit: 'sitting', coffee: 'coffee', talk: 'talking', relax: 'relaxing' }[action] || '';
+// Khung hình bước đi: đổi 6 frame nhìn ngang, ~9 frame/giây.
+function startWalkCycle(rec, avatar) {
+  stopWalkCycle(rec);
+  const img = rec.el.querySelector('.walk-img');
+  let frame = 0;
+  img.src = `assets/${avatar}-walk1.png`;
+  rec.walkInterval = setInterval(() => {
+    frame = (frame + 1) % 6;
+    img.src = `assets/${avatar}-walk${frame + 1}.png`;
+  }, 110);
+}
+
+function stopWalkCycle(rec) {
+  if (rec.walkInterval) { clearInterval(rec.walkInterval); rec.walkInterval = null; }
 }
 
 function applyPose(rec, p) {
   const el = rec.el;
-  el.classList.remove('sitting', 'coffee', 'talking', 'relaxing', 'show-badge');
-  const pc = poseClass(p.action);
-  if (pc) el.classList.add(pc);
+  el.classList.remove('sitting', 'coffee', 'talking', 'show-badge');
+  const talking = rec.talkingUntil && Date.now() < rec.talkingUntil;
+  const variant = spriteVariant(p, talking);
+  const img = el.querySelector('.sprite-img');
+  const src = `assets/${p.avatar}-${variant}.png`;
+  if (img.getAttribute('src') !== src) img.src = src;
+  if (p.action === 'sit') el.classList.add('sitting');
+  if (p.action === 'coffee') el.classList.add('coffee');
+  if (p.action === 'talk' || talking) el.classList.add('talking');
   const badge = ACTION_META[p.action] ? ACTION_META[p.action].badge : '';
   const badgeEl = el.querySelector('.badge');
   if (badge) { badgeEl.textContent = badge; el.classList.add('show-badge'); }
@@ -183,20 +255,24 @@ function applyState(list) {
       const dist = Math.sqrt(dx * dx + dy * dy);
       const dur = Math.max(500, Math.min(2200, dist * 55));
       rec.el.classList.toggle('flip', dx < -0.5);
-      rec.el.classList.remove('sitting', 'coffee', 'talking', 'relaxing', 'show-badge');
+      rec.el.classList.remove('sitting', 'coffee', 'talking', 'show-badge');
       rec.el.classList.add('walking');
+      startWalkCycle(rec, p.avatar);
       rec.el.style.transitionDuration = dur + 'ms';
       rec.el.style.left = p.x + '%';
       rec.el.style.top = p.y + '%';
       clearTimeout(rec.walkTimer);
       rec.walkTimer = setTimeout(() => {
         rec.el.classList.remove('walking');
-        applyPose(rec, p);
+        stopWalkCycle(rec);
+        const latest = participants.find((x) => x.id === p.id) || p;
+        applyPose(rec, latest);
       }, dur);
       rec.x = p.x; rec.y = p.y;
     } else if (actionChanged) {
       clearTimeout(rec.walkTimer);
       rec.el.classList.remove('walking');
+      stopWalkCycle(rec);
       applyPose(rec, p);
     } else {
       applyPose(rec, p);
@@ -205,7 +281,8 @@ function applyState(list) {
   }
   for (const [id, rec] of charEls) {
     if (!seen.has(id)) {
-      clearTimeout(rec.walkTimer); clearTimeout(rec.bubbleTimer);
+      clearTimeout(rec.walkTimer); clearTimeout(rec.bubbleTimer); clearTimeout(rec.talkTimer);
+      stopWalkCycle(rec);
       rec.el.remove();
       charEls.delete(id);
     }
@@ -268,6 +345,14 @@ function showBubble(m) {
   rec.el.classList.add('has-bubble');
   clearTimeout(rec.bubbleTimer);
   rec.bubbleTimer = setTimeout(() => rec.el.classList.remove('has-bubble'), 6000);
+  // Người vừa nhắn tin thì hiện dáng đang nói chuyện trong ~4 giây.
+  rec.talkingUntil = Date.now() + 4000;
+  if (!rec.el.classList.contains('walking')) applyPose(rec, p);
+  clearTimeout(rec.talkTimer);
+  rec.talkTimer = setTimeout(() => {
+    const latest = participants.find((x) => x.id === p.id);
+    if (latest && !rec.el.classList.contains('walking')) applyPose(rec, latest);
+  }, 4100);
 }
 
 $('#chat-form').addEventListener('submit', (e) => {
@@ -408,6 +493,7 @@ setInterval(rotateTip, 12000);
 
 // ---------- Vào văn phòng ----------
 buildAvatarGrid();
+buildExpressionPicker();
 $('#name-input').value = localStorage.getItem('wcc-name') || '';
 
 function enterOffice() {

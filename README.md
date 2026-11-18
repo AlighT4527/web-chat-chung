@@ -25,10 +25,18 @@ Mở http://localhost:3000 — gửi link cho người khác cùng mạng là v�
 - **Một kênh chat công ty chung** cho tất cả mọi người, realtime qua
   WebSocket. Tin nhắn mới nhất hiện thành bong bóng thoại trên đầu nhân vật.
 - **Nhân vật sống động**: bấm vào cảnh để nhân vật bước tới với dáng đi nhìn
-  ngang, chân bước xen kẽ; làm việc thì ngồi lên ghế quay lưng lại, màn hình
-  PC sáng lên; pha cafe thì ra máy/cây nước cầm cốc bốc hơi; trò chuyện, nghỉ
-  sofa — mỗi hành động có huy hiệu biểu cảm riêng. Sprite nhỏ cân đối với
-  đồ đạc trong văn phòng.
+  ngang chạy bằng 6 khung hình bước chân; làm việc thì ngồi lên ghế quay
+  lưng lại, màn hình PC sáng lên; pha cafe thì ra máy/cây nước rót cafe;
+  trò chuyện, nghỉ sofa — mỗi hành động có sprite dáng riêng và huy hiệu
+  riêng. Sprite nhỏ cân đối với đồ đạc trong văn phòng.
+- **Biểu cảm**: hàng nút 😐 😄 😢 😠 😲 😳 đổi nét mặt của nhân vật
+  (bình thường, vui, buồn, giận, ngạc nhiên, ngại) — mọi người đều thấy.
+  Khi nhân vật đang làm việc, pha cafe hay nghỉ ngơi thì dáng hành động
+  được ưu tiên; biểu cảm hiện khi đứng hoặc trò chuyện. Người vừa nhắn tin
+  thì hiện dáng đang nói chuyện trong vài giây.
+- **API REST**: đọc tin nhắn, danh sách người tham gia và toàn bộ trạng
+  thái, hoặc gửi tin nhắn vào kênh chung từ bên ngoài — xem `API.md`.
+  Có thể bảo vệ endpoint gửi tin bằng biến môi trường `API_KEY`.
 - **Điều khiển tay + tự động**: nút Làm việc / Pha cafe / Trò chuyện /
   Nghỉ ngơi cho nhân vật của mình; bật "Tifa tự điều khiển khi bạn vắng" thì
   sau 60 giây không thao tác nhân vật sẽ tự sinh hoạt (làm việc → pha cafe →
@@ -47,10 +55,12 @@ máy chủ vẫn còn lịch sử. Đổi vị trí file bằng biến `DATA_FIL
 
 ## Ảnh tài sản
 
-9 ảnh PNG (nền văn phòng + 8 sprite) được lưu kèm dưới dạng base64 trong
+Tất cả ảnh PNG (nền văn phòng + 8 sprite gốc + sprite biểu cảm/dáng và khung
+hình bước đi của 8 nhân vật) được lưu kèm dưới dạng base64 trong
 `assets-base64.json`, vì kênh đẩy lên GitHub của Muse chỉ nhận file text.
 Lần chạy đầu tiên trên máy mới, `server.js` tự giải mã chúng ra
-`public/assets/`; các lần sau file đã có sẵn thì bỏ qua.
+`public/assets/`; các lần sau file đã có sẵn thì bỏ qua. Mỗi sprite nhân
+vật cao tối đa 160px để tổng bundle luôn dưới 10 MB.
 
 ## Deploy lên Render (gói free)
 
@@ -69,14 +79,16 @@ Lần chạy đầu tiên trên máy mới, `server.js` tự giải mã chúng r
 ## Cấu trúc
 
 ```
-server.js            Máy chủ Express + WebSocket, lưu trữ data.json
+server.js            Máy chủ Express + WebSocket + API REST, lưu trữ data.json
+API.md               Tài liệu API REST (đọc/gửi tin nhắn, trạng thái)
 public/
   index.html         Màn hình vào + khung văn phòng + chat
   style.css          Giao diện + animation nhân vật
   app.js             Logic client: di chuyển, hành động, autopilot, chat
   assets/
     office.png       Nền văn phòng pixel-art nhìn từ trên xuống
-    tifa.png ...     8 sprite nhân vật (nền trong suốt)
+    <tên>.png        8 sprite nhân vật gốc (nền trong suốt)
+    <tên>-*.png      Sprite biểu cảm/dáng + khung hình bước đi từng nhân vật
 render.yaml          Cấu hình deploy Render
 ```
 
