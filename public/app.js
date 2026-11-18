@@ -34,6 +34,19 @@ const SOFA_SPOTS = [[92.5, 70], [92.5, 88]];
 const COFFEE_SPOTS = [[78, 21], [85, 21]];
 const TALK_SPOTS = [[73, 32], [83, 32], [78, 39], [68.5, 62.5], [73.5, 62.5], [78.5, 62.5]];
 
+// Vị trí màn hình của 8 bàn PC trong ảnh nền (khớp thứ tự ZONES.work.spots).
+// Màn hình vẽ tối sẵn; lớp phủ sáng lên khi có người ngồi làm việc ở bàn đó.
+const SCREENS = [
+  { x: 18.75,  y: 32.031, w: 2.93,  h: 1.91 },
+  { x: 26.562, y: 32.031, w: 2.93,  h: 1.91 },
+  { x: 34.375, y: 32.031, w: 2.93,  h: 1.91 },
+  { x: 42.188, y: 32.031, w: 2.93,  h: 1.91 },
+  { x: 18.75,  y: 62.587, w: 2.881, h: 1.91 },
+  { x: 26.562, y: 62.587, w: 2.93,  h: 1.91 },
+  { x: 34.375, y: 62.587, w: 2.93,  h: 1.91 },
+  { x: 42.236, y: 62.587, w: 2.881, h: 1.91 },
+];
+
 const ACTION_META = {
   stand:  { label: 'Đang đứng',      badge: ''   },
   sit:    { label: 'Đang làm việc',  badge: '💻' },
@@ -58,6 +71,28 @@ const sceneEl = $('#scene');
 const charsEl = $('#characters');
 const messagesEl = $('#messages');
 const peopleListEl = $('#people-list');
+
+// Tạo 8 lớp phủ màn hình PC (tối mặc định, sáng khi có người ngồi).
+const screenEls = SCREENS.map((r) => {
+  const d = document.createElement('div');
+  d.className = 'screen';
+  d.style.left = r.x + '%';
+  d.style.top = r.y + '%';
+  d.style.width = r.w + '%';
+  d.style.height = r.h + '%';
+  $('#screens').appendChild(d);
+  return d;
+});
+
+// Bật/tắt màn hình theo người đang ngồi làm việc ở từng bàn.
+function updateScreens() {
+  const spots = ZONES.work.spots;
+  for (let i = 0; i < spots.length; i++) {
+    const [sx, sy] = spots[i];
+    const occupied = participants.some((p) => p.action === 'sit' && Math.abs(p.x - sx) < 3 && Math.abs(p.y - sy) < 3);
+    screenEls[i].classList.toggle('lit', occupied);
+  }
+}
 
 let ws = null;
 let myId = null;
@@ -289,6 +324,7 @@ function applyState(list) {
   }
   renderPeople();
   updateMyStatus();
+  updateScreens();
 }
 
 function renderPeople() {

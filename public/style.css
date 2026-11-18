@@ -79,6 +79,18 @@ button { cursor: pointer; }
   pointer-events: none;
 }
 #characters { position: absolute; inset: 0; }
+
+/* Màn hình PC: ảnh nền vẽ màn hình tối; lớp này sáng lên khi có người ngồi. */
+#screens { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.screen {
+  position: absolute;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #e4ffdf 0%, #c9f7cd 55%, #a9e8b4 100%);
+  box-shadow: 0 0 12px 3px rgba(180, 255, 190, .55), 0 0 3px 1px rgba(220, 255, 225, .8);
+  opacity: 0;
+  transition: opacity .35s ease;
+}
+.screen.lit { opacity: 1; }
 #zone-hint {
   position: absolute; left: 10px; bottom: 8px;
   background: rgba(0,0,0,.55); color: #fff;
